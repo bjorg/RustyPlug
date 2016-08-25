@@ -1,5 +1,5 @@
 mod uri_parser;
 pub mod plug;
 
-//#[cfg(test)]
+#[cfg(test)]
 mod tests;
