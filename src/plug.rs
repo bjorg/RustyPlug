@@ -20,11 +20,6 @@ pub struct Plug {
 }
 
 impl Plug {
-
-    // TOOD: missing methods
-    // * without_query()
-    // * with_trailing_slash(bool)
-
     pub fn new(uri: &str) -> Option<Plug> {
         let mut parser = uri.chars();
         let scheme = uri_parser::try_parse_scheme(&mut parser);
@@ -91,12 +86,24 @@ impl Plug {
         return Plug { query: Some(new_query), ..self.clone() };
     }
 
+    pub fn without_query(&self) -> Plug {
+        return Plug { query: None, ..self.clone() };
+    }
+
     pub fn with_fragment(&self, fragment: &str) -> Plug {
         return Plug { fragment: Some(fragment.into()), ..self.clone() };
     }
 
     pub fn without_fragment(&self) -> Plug {
         return Plug { fragment: None, ..self.clone() };
+    }
+
+    pub fn with_trailing_slash(&self, trailing_slash: bool) -> Plug {
+        return Plug { trailing_slash: trailing_slash, ..self.clone() };
+    }
+
+    pub fn without_trailing_slash(&self) -> Plug {
+        return Plug { trailing_slash: false, ..self.clone() };
     }
 }
 

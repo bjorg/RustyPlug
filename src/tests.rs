@@ -32,15 +32,15 @@ fn full_plug() -> Plug {
 }
 
 #[test]
-fn full_plug_succeeds() {
-    let p = full_plug();
-    assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c/?key=value#anchor"), p.to_string());
-}
-
-#[test]
 fn default_plug_succeeds() {
     let p = default_plug();
     assert_eq!(String::from("http://example.org"), p.to_string());
+}
+
+#[test]
+fn full_plug_succeeds() {
+    let p = full_plug();
+    assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c/?key=value#anchor"), p.to_string());
 }
 
 #[test]
@@ -50,7 +50,13 @@ fn with_scheme_succeeds() {
 }
 
 #[test]
-fn with_credentials_succeeds() {
+fn with_credentials_username_succeeds() {
+    let p = default_plug().with_credentials(PlugCredentials::Username("john".into()));
+    assert_eq!(String::from("http://john@example.org"), p.to_string());
+}
+
+#[test]
+fn with_credentials_username_password_succeeds() {
     let p = default_plug().with_credentials(PlugCredentials::UsernamePassword("john".into(), "pa$$w0rd".into()));
     assert_eq!(String::from("http://john:pa$$w0rd@example.org"), p.to_string());
 }
@@ -98,6 +104,12 @@ fn with_succeeds() {
 }
 
 #[test]
+fn without_query_succeeds() {
+    let p = full_plug().without_query();
+    assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c/#anchor"), p.to_string());
+}
+
+#[test]
 fn with_fragment_succeeds() {
     let p = default_plug().with_fragment("anchor".into());
     assert_eq!(String::from("http://example.org#anchor"), p.to_string());
@@ -107,6 +119,18 @@ fn with_fragment_succeeds() {
 fn without_fragment_succeeds() {
     let p = full_plug().without_fragment();
     assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c/?key=value"), p.to_string());
+}
+
+#[test]
+fn with_trailing_slash_succeeds() {
+    let p = default_plug().with_trailing_slash(true);
+    assert_eq!(String::from("http://example.org/"), p.to_string());
+}
+
+#[test]
+fn without_trailing_slash_succeeds() {
+    let p = full_plug().without_trailing_slash();
+    assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c?key=value#anchor"), p.to_string());
 }
 
 //--- uri_parser tests ---
