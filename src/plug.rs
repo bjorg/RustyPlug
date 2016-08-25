@@ -22,8 +22,6 @@ pub struct Plug {
 impl Plug {
 
     // TOOD: missing methods
-    // * with_credentials(username, password)
-    // * without_credentials()
     // * without_query()
     // * with_trailing_slash(bool)
 
