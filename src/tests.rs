@@ -6,29 +6,29 @@ use uri_parser;
 
 //--- plub tests ---
 fn default_plug() -> Plug {
-    return Plug {
-        scheme: "http".into(),
-        credentials: PlugCredentials::None,
-        host: "example.org".into(),
-        port: None,
-        segments: vec![],
-        query: None,
-        fragment: None,
-        trailing_slash: false,
-    };
+    return Plug::new(
+        "http".into(),
+        PlugCredentials::None,
+        "example.org".into(),
+        None,
+        vec![],
+        None,
+        None,
+        false,
+    );
 }
 
 fn full_plug() -> Plug {
-    return Plug {
-        scheme: "http".into(),
-        credentials: PlugCredentials::UsernamePassword("bob".into(), "pwd".into()),
-        host: "example.org".into(),
-        port: Some(8081),
-        segments: vec!["a".into(), "b".into(), "c".into()],
-        query: Some(vec![("key".into(), Some("value".into()))]),
-        fragment: Some("anchor".into()),
-        trailing_slash: true,
-    };
+    return Plug::new(
+        "http".into(),
+        PlugCredentials::UsernamePassword("bob".into(), "pwd".into()),
+        "example.org".into(),
+        Some(8081),
+        vec!["a".into(), "b".into(), "c".into()],
+        Some(vec![("key".into(), Some("value".into()))]),
+        Some("anchor".into()),
+        true,
+    );
 }
 
 #[test]
@@ -41,6 +41,48 @@ fn default_plug_succeeds() {
 fn full_plug_succeeds() {
     let p = full_plug();
     assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c/?key=value#anchor"), p.to_string());
+}
+
+#[test]
+fn get_scheme_succeeds() {
+    assert_eq!(String::from("http"), default_plug().get_scheme());
+    assert_eq!(String::from("http"), full_plug().get_scheme());
+}
+
+#[test]
+fn get_credentials_succeeds() {
+    assert_eq!(&PlugCredentials::None, default_plug().get_credentials());
+    assert_eq!(&PlugCredentials::UsernamePassword(String::from("bob"), String::from("pwd")), full_plug().get_credentials());
+}
+
+#[test]
+fn get_host_succeeds() {
+    assert_eq!(String::from("example.org"), default_plug().get_host());
+    assert_eq!(String::from("example.org"), full_plug().get_host());
+}
+
+#[test]
+fn get_segments_succeeds() {
+    assert_eq!(&[] as &[String], default_plug().get_segments());
+    assert_eq!(&[String::from("a"), String::from("b"), String::from("c")], full_plug().get_segments());
+}
+
+#[test]
+fn get_query_succeeds() {
+    assert_eq!(&None, default_plug().get_query());
+    assert_eq!(&Some(vec![(String::from("key"), Some(String::from("value")))]), full_plug().get_query());
+}
+
+#[test]
+fn get_fragment_succeeds() {
+    assert_eq!(&None, default_plug().get_fragment());
+    assert_eq!(&Some(String::from("anchor")), full_plug().get_fragment());
+}
+
+#[test]
+fn get_trailing_slash_succeeds() {
+    assert_eq!(false, default_plug().get_trailing_slash());
+    assert_eq!(true, full_plug().get_trailing_slash());
 }
 
 #[test]

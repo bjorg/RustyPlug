@@ -1,26 +1,48 @@
 use uri_parser;
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum PlugCredentials {
     None,
     Username(String),
     UsernamePassword(String, String)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Plug {
-    pub scheme: String,
-    pub credentials: PlugCredentials,
-    pub host: String,
-    pub port: Option<u16>,
-    pub segments: Vec<String>,
-    pub query: Option<Vec<(String, Option<String>)>>,
-    pub fragment: Option<String>,
-    pub trailing_slash: bool
+    scheme: String,
+    credentials: PlugCredentials,
+    host: String,
+    port: Option<u16>,
+    segments: Vec<String>,
+    query: Option<Vec<(String, Option<String>)>>,
+    fragment: Option<String>,
+    trailing_slash: bool
 }
 
 impl Plug {
-    pub fn new(uri: &str) -> Option<Plug> {
+    pub fn new(
+        scheme: String, 
+        credentials: PlugCredentials, 
+        host: String, 
+        port: Option<u16>, 
+        segments: Vec<String>, 
+        query: Option<Vec<(String, Option<String>)>>,
+        fragment: Option<String>,
+        trailing_slash: bool
+    ) -> Plug {
+        return Plug {
+            scheme: scheme,
+            credentials: credentials,
+            host: host,
+            port: port,
+            segments: segments,
+            query: query,
+            fragment: fragment,
+            trailing_slash: trailing_slash
+        };
+    }
+
+    pub fn parse(uri: &str) -> Option<Plug> {
         let mut parser = uri.chars();
         let scheme = uri_parser::try_parse_scheme(&mut parser);
         if scheme == None {
@@ -39,6 +61,34 @@ impl Plug {
             fragment: None,
             trailing_slash: false,
         });
+    }
+
+    pub fn get_scheme(&self) -> &str {
+        return &self.scheme;
+    }
+
+    pub fn get_credentials(&self) -> &PlugCredentials {
+        return &self.credentials;
+    }
+
+    pub fn get_host(&self) -> &str {
+        return &self.host;
+    }
+
+    pub fn get_segments(&self) -> &[String] {
+        return &self.segments;
+    }
+
+    pub fn get_query(&self) -> &Option<Vec<(String, Option<String>)>> {
+        return &self.query;
+    }
+
+    pub fn get_fragment(&self) -> &Option<String> {
+        return &self.fragment;
+    }
+
+    pub fn get_trailing_slash(&self) -> bool {
+        return self.trailing_slash;
     }
 
     pub fn with_scheme(&self, scheme: String) -> Plug {
