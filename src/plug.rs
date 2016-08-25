@@ -14,6 +14,13 @@ pub struct Plug {
 }
 
 impl Plug {
+
+    // TOOD: missing methods
+    // * with_credentials(username, password)
+    // * without_credentials()
+    // * without_query()
+    // * with_trailing_slash(bool)
+
     pub fn new(uri: &str) -> Option<Plug> {
         let mut parser = uri.chars();
         let scheme = uri_parser::try_parse_scheme(&mut parser);
@@ -52,10 +59,10 @@ impl Plug {
         return Plug { port: None, ..self.clone() };
     }
 
-    pub fn at(&self, segments: &[&str]) -> Plug {
+    pub fn at(&self, segments: Vec<String>) -> Plug {
         let mut new_segments = self.segments.to_vec();
-        for &segment in segments.iter() {
-            new_segments.push(segment.into());
+        for segment in segments.into_iter() {
+            new_segments.push(segment);
         }
         return Plug { segments: new_segments, ..self.clone() };
     }

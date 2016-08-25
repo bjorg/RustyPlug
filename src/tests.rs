@@ -19,9 +19,8 @@ fn default_plug() -> Plug {
     };
 }
 
-#[test]
-fn to_string_with_all_fields() {
-    let p = Plug {
+fn full_plug() -> Plug {
+    return Plug {
         scheme: "http".into(),
         user: Some("bob".into()),
         password: Some("pwd".into()),
@@ -32,6 +31,11 @@ fn to_string_with_all_fields() {
         fragment: Some("anchor".into()),
         trailing_slash: true,
     };
+}
+
+#[test]
+fn full_plug_succeeds() {
+    let p = full_plug();
     assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c/?key=value#anchor"), p.to_string());
 }
 
@@ -43,8 +47,56 @@ fn default_plug_succeeds() {
 
 #[test]
 fn with_scheme_succeeds() {
-    let p = default_plug();
-    assert_eq!(String::from("https://example.org"), p.with_scheme("https".into()).to_string());
+    let p = default_plug().with_scheme("https".into());
+    assert_eq!(String::from("https://example.org"), p.to_string());
+}
+
+#[test]
+fn with_host_succeeds() {
+    let p = default_plug().with_host("example.com".into());
+    assert_eq!(String::from("http://example.com"), p.to_string());
+}
+
+#[test]
+fn with_port_succeeds() {
+    let p = default_plug().with_port(8081);
+    assert_eq!(String::from("http://example.org:8081"), p.to_string());
+}
+
+#[test]
+fn without_port_succeeds() {
+    let p = full_plug().without_port();
+    assert_eq!(String::from("http://bob:pwd@example.org/a/b/c/?key=value#anchor"), p.to_string());
+}
+
+#[test]
+fn at_succeeds() {
+    let p = default_plug().at(vec!["a".into(), "b".into(), "c".into()]);
+    assert_eq!(String::from("http://example.org/a/b/c"), p.to_string());
+}
+
+#[test]
+fn without_path_succeeds() {
+    let p = full_plug().without_path();
+    assert_eq!(String::from("http://bob:pwd@example.org:8081/?key=value#anchor"), p.to_string());
+}
+
+#[test]
+fn with_succeeds() {
+    let p = default_plug().with("key".into(), "value".into());
+    assert_eq!(String::from("http://example.org?key=value"), p.to_string());
+}
+
+#[test]
+fn with_fragment_succeeds() {
+    let p = default_plug().with_fragment("anchor".into());
+    assert_eq!(String::from("http://example.org#anchor"), p.to_string());
+}
+
+#[test]
+fn without_fragment_succeeds() {
+    let p = full_plug().without_fragment();
+    assert_eq!(String::from("http://bob:pwd@example.org:8081/a/b/c/?key=value"), p.to_string());
 }
 
 //--- uri_parser tests ---
