@@ -1,0 +1,6 @@
+[package]
+name = "plug"
+version = "0.1.0"
+authors = ["Steve Bjorg <steve.bjorg@gmail.com>"]
+
+[dependencies]
