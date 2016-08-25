@@ -1,10 +1,16 @@
 use uri_parser;
 
 #[derive(Debug, Clone)]
+pub enum PlugCredentials {
+    None,
+    Username(String),
+    UsernamePassword(String, String)
+}
+
+#[derive(Debug, Clone)]
 pub struct Plug {
     pub scheme: String,
-    pub user: Option<String>,
-    pub password: Option<String>,
+    pub credentials: PlugCredentials,
     pub host: String,
     pub port: Option<u16>,
     pub segments: Vec<String>,
@@ -32,8 +38,7 @@ impl Plug {
             scheme: scheme.unwrap(),
 
             // TODO
-            user: None,
-            password: None,
+            credentials: PlugCredentials::None,
             host: String::from(""),
             port: None,
             segments: vec![],
@@ -45,6 +50,14 @@ impl Plug {
 
     pub fn with_scheme(&self, scheme: String) -> Plug {
         return Plug { scheme: scheme, ..self.clone() };
+    }
+
+    pub fn with_credentials(&self, credentials: PlugCredentials) -> Plug {
+        return Plug { credentials: credentials, ..self.clone() };        
+    }
+
+    pub fn without_credentials(&self) -> Plug {
+        return Plug { credentials: PlugCredentials::None, ..self.clone() };        
     }
 
     pub fn with_host(&self, host: String) -> Plug {
@@ -94,15 +107,19 @@ impl ToString for Plug {
         let mut buffer = String::new();
         buffer.push_str(&self.scheme);
         buffer.push_str("://");
-        if let Some(ref user) = self.user {
-            buffer.push_str(&user);
-            if let Some(ref password) = self.password {
+        match self.credentials  {
+            PlugCredentials::None => (),
+            PlugCredentials::Username(ref username) => {
+                buffer.push_str(&username);
+                buffer.push_str("@");
+            },
+            PlugCredentials::UsernamePassword(ref username, ref password) => {
+                buffer.push_str(&username);
                 buffer.push_str(":");
                 buffer.push_str(&password);
+                buffer.push_str("@");
             }
-            buffer.push_str("@");
         }
-
         buffer.push_str(&self.host);
         if let Some(port) = self.port {
             buffer.push_str(&format!(":{}", port));

@@ -1,15 +1,14 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use plug::Plug;
+use plug::{Plug, PlugCredentials};
 use uri_parser;
 
 //--- plub tests ---
 fn default_plug() -> Plug {
     return Plug {
         scheme: "http".into(),
-        user: None,
-        password: None,
+        credentials: PlugCredentials::None,
         host: "example.org".into(),
         port: None,
         segments: vec![],
@@ -22,8 +21,7 @@ fn default_plug() -> Plug {
 fn full_plug() -> Plug {
     return Plug {
         scheme: "http".into(),
-        user: Some("bob".into()),
-        password: Some("pwd".into()),
+        credentials: PlugCredentials::UsernamePassword("bob".into(), "pwd".into()),
         host: "example.org".into(),
         port: Some(8081),
         segments: vec!["a".into(), "b".into(), "c".into()],
@@ -49,6 +47,18 @@ fn default_plug_succeeds() {
 fn with_scheme_succeeds() {
     let p = default_plug().with_scheme("https".into());
     assert_eq!(String::from("https://example.org"), p.to_string());
+}
+
+#[test]
+fn with_credentials_succeeds() {
+    let p = default_plug().with_credentials(PlugCredentials::UsernamePassword("john".into(), "pa$$w0rd".into()));
+    assert_eq!(String::from("http://john:pa$$w0rd@example.org"), p.to_string());
+}
+
+#[test]
+fn without_credentials_succeeds() {
+    let p = full_plug().without_credentials();
+    assert_eq!(String::from("http://example.org:8081/a/b/c/?key=value#anchor"), p.to_string());
 }
 
 #[test]
