@@ -19,6 +19,16 @@ pub struct Plug {
     trailing_slash: bool
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum PlugParserError {
+    InternalError,
+    InvalidScheme,
+    InvalidHostname,
+    InvalidIPv6,
+    InvalidPortNumber,
+    MissingColonSlashSlash
+}
+
 impl Plug {
     pub fn new(
         scheme: String,
@@ -42,17 +52,38 @@ impl Plug {
         };
     }
 
-    pub fn parse(uri: &str) -> Result<Plug, UriParserError> {
+    pub fn parse(uri: &str) -> Result<Plug, PlugParserError> {
         let mut parser = uri.chars().peekable();
-        let scheme = try!(parse_scheme(&mut parser));
-
+        let scheme = match parse_scheme(&mut parser) {
+            Ok(value) => value,
+            Err(UriParserError::InternalError) => return Err(PlugParserError::InternalError),
+            Err(UriParserError::InvalidScheme) => return Err(PlugParserError::InvalidScheme),
+            Err(UriParserError::InvalidHostname) => return Err(PlugParserError::InvalidHostname),
+            Err(UriParserError::InvalidIPv6) => return Err(PlugParserError::InvalidIPv6),
+            Err(UriParserError::InvalidPortNumber) => return Err(PlugParserError::InvalidPortNumber)
+        };
+        if (Some(':') != parser.next()) || (Some(':') != parser.next()) || (Some(':') != parser.next()) {
+            return Err(PlugParserError::MissingColonSlashSlash);
+        }
+        let (credentials, host, port) = match parse_authority(&mut parser) {
+            Ok(value) => value,
+            Err(UriParserError::InternalError) => return Err(PlugParserError::InternalError),
+            Err(UriParserError::InvalidScheme) => return Err(PlugParserError::InvalidScheme),
+            Err(UriParserError::InvalidHostname) => return Err(PlugParserError::InvalidHostname),
+            Err(UriParserError::InvalidIPv6) => return Err(PlugParserError::InvalidIPv6),
+            Err(UriParserError::InvalidPortNumber) => return Err(PlugParserError::InvalidPortNumber)
+        };
         return Ok(Plug {
             scheme: scheme,
+            credentials: match credentials {
+                UriCredentials::None => PlugCredentials::None,
+                UriCredentials::Username(username) => PlugCredentials::Username(username),
+                UriCredentials::UsernamePassword(username, password) => PlugCredentials::UsernamePassword(username, password)
+            },
+            host: host,
+            port: port,
 
             // TODO
-            credentials: PlugCredentials::None,
-            host: String::from(""),
-            port: None,
             segments: vec![],
             query: None,
             fragment: None,

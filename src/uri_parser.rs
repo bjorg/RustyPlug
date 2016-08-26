@@ -1,6 +1,3 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
 use std::str::Chars;
 use std::iter::Peekable;
 
@@ -330,7 +327,7 @@ pub fn parse_authority(mut parser: &mut Peekable<Chars>) -> Result<(UriCredentia
     return parse_hostname_or_userinfo(parser);
 }
 
-fn uri_decode(text: &str) -> String {
+fn uri_decode(_text: &str) -> String {
     unimplemented!();
 }
 
