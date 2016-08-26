@@ -2,7 +2,7 @@
 #![allow(unused_imports)]
 
 use plug::{Plug, PlugCredentials};
-use uri_parser;
+use uri_parser::*;
 
 //--- plub tests ---
 fn default_plug() -> Plug {
@@ -178,24 +178,130 @@ fn without_trailing_slash_succeeds() {
 //--- uri_parser tests ---
 
 #[test]
-fn try_parse_scheme_succeeds() {
-    let text = "http://*";
-    let mut chars = text.chars();
-    let scheme = uri_parser::try_parse_scheme(&mut chars);
-    assert_eq!(Some("http".into()), scheme);
-    assert_eq!(Some('*'), chars.next());
-}
-
-#[test]
-fn try_parse_scheme_with_empty_scheme_fails() {
-    let text = "";
-    let scheme = uri_parser::try_parse_scheme(&mut text.chars());
-    assert_eq!(None, scheme);
-}
-
-#[test]
-fn try_parse_scheme_with_scheme_with_missing_colon_slash_slash_fails() {
+fn parse_scheme_succeeds() {
     let text = "http";
-    let scheme = uri_parser::try_parse_scheme(&mut text.chars());
-    assert_eq!(None, scheme);
+    let mut chars = text.chars().peekable();
+    let scheme = parse_scheme(&mut chars);
+    assert_eq!(Ok("http".into()), scheme);
+}
+
+#[test]
+fn parse_scheme_with_colon_succeeds() {
+    let text = "http:";
+    let mut chars = text.chars().peekable();
+    let scheme = parse_scheme(&mut chars);
+    assert_eq!(Ok("http".into()), scheme);
+    assert_eq!(Some(':'), chars.next());
+}
+
+#[test]
+fn parse_scheme_with_empty_scheme_fails() {
+    let text = "";
+    let mut chars = text.chars().peekable();
+    let scheme = parse_scheme(&mut chars);
+    assert_eq!(Err(UriParserError::InvalidScheme), scheme);
+}
+
+#[test]
+fn parse_scheme_with_invalid_terminator_fails() {
+    let text = "http*";
+    let mut chars = text.chars().peekable();
+    let scheme = parse_scheme(&mut chars);
+    assert_eq!(Err(UriParserError::InvalidScheme), scheme);
+}
+
+#[test]
+fn parse_authority_with_hostname_succeeds() {
+    let text = "example.org";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::None, "example.org".into(), None)), authority);
+}
+
+#[test]
+fn parse_authority_with_ipv6_succeeds() {
+    let text = "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::None, "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]".into(), None)), authority);
+}
+
+#[test]
+fn parse_authority_with_username_hostname_succeeds() {
+    let text = "bob@example.org";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::Username("bob".into()), "example.org".into(), None)), authority);
+}
+
+#[test]
+fn parse_authority_with_username_password_hostname_succeeds() {
+    let text = "bob:pwd@example.org";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::UsernamePassword("bob".into(), "pwd".into()), "example.org".into(), None)), authority);
+}
+
+#[test]
+fn parse_authority_with_username_ipv6_succeeds() {
+    let text = "bob@[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::Username("bob".into()), "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]".into(), None)), authority);
+}
+
+#[test]
+fn parse_authority_with_username_password_ipv6_succeeds() {
+    let text = "bob:pwd@[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::UsernamePassword("bob".into(), "pwd".into()), "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]".into(), None)), authority);
+}
+
+#[test]
+fn parse_authority_with_hostname_portnumber_succeeds() {
+    let text = "example.org:8081";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::None, "example.org".into(), Some(8081))), authority);
+}
+
+#[test]
+fn parse_authority_with_ipv6_portnumber_succeeds() {
+    let text = "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:8081";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::None, "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]".into(), Some(8081))), authority);
+}
+
+#[test]
+fn parse_authority_with_username_hostname_portnumber_succeeds() {
+    let text = "bob@example.org:8081";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::Username("bob".into()), "example.org".into(), Some(8081))), authority);
+}
+
+#[test]
+fn parse_authority_with_username_password_hostname_portnumber_succeeds() {
+    let text = "bob:pwd@example.org:8081";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::UsernamePassword("bob".into(), "pwd".into()), "example.org".into(), Some(8081))), authority);
+}
+
+#[test]
+fn parse_authority_with_username_ipv6_portnumber_succeeds() {
+    let text = "bob@[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:8081";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::Username("bob".into()), "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]".into(), Some(8081))), authority);
+}
+
+#[test]
+fn parse_authority_with_username_password_ipv6_portnumber_succeeds() {
+    let text = "bob:pwd@[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:8081";
+    let mut chars = text.chars().peekable();
+    let authority = parse_authority(&mut chars);
+    assert_eq!(Ok((UriCredentials::UsernamePassword("bob".into(), "pwd".into()), "[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]".into(), Some(8081))), authority);
 }

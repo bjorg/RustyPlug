@@ -1,4 +1,4 @@
-use uri_parser;
+use uri_parser::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum PlugCredentials {
@@ -21,11 +21,11 @@ pub struct Plug {
 
 impl Plug {
     pub fn new(
-        scheme: String, 
-        credentials: PlugCredentials, 
-        host: String, 
-        port: Option<u16>, 
-        segments: Vec<String>, 
+        scheme: String,
+        credentials: PlugCredentials,
+        host: String,
+        port: Option<u16>,
+        segments: Vec<String>,
         query: Option<Vec<(String, Option<String>)>>,
         fragment: Option<String>,
         trailing_slash: bool
@@ -42,15 +42,12 @@ impl Plug {
         };
     }
 
-    pub fn parse(uri: &str) -> Option<Plug> {
-        let mut parser = uri.chars();
-        let scheme = uri_parser::try_parse_scheme(&mut parser);
-        if scheme == None {
-            return None;
-        }
+    pub fn parse(uri: &str) -> Result<Plug, UriParserError> {
+        let mut parser = uri.chars().peekable();
+        let scheme = try!(parse_scheme(&mut parser));
 
-        return Some(Plug {
-            scheme: scheme.unwrap(),
+        return Ok(Plug {
+            scheme: scheme,
 
             // TODO
             credentials: PlugCredentials::None,
@@ -96,11 +93,11 @@ impl Plug {
     }
 
     pub fn with_credentials(&self, credentials: PlugCredentials) -> Plug {
-        return Plug { credentials: credentials, ..self.clone() };        
+        return Plug { credentials: credentials, ..self.clone() };
     }
 
     pub fn without_credentials(&self) -> Plug {
-        return Plug { credentials: PlugCredentials::None, ..self.clone() };        
+        return Plug { credentials: PlugCredentials::None, ..self.clone() };
     }
 
     pub fn with_host(&self, host: String) -> Plug {
